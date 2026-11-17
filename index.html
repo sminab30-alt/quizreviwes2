@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Review – Interactive Worksheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<!-- Optional: confetti (the page still works if this fails to load) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+/* ===== 1. CSS VARIABLES ===== */
+:root{
+  --bg:#f3f6ff; --ink:#1f2748; --mute:#5d6688; --card:#fff; --line:#e0e6f7;
+  --c1:#3b6cf0; --c2:#f08a24; --c3:#17a673; --c4:#e8467a; --c5:#8453f2; --c6:#0f9ac0; /* part colours */
+  --good:#17a673; --bad:#e04848; --r:22px; --shadow:0 8px 24px rgba(40,60,140,.13);
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+
+/* ===== 2. BASE + BACKGROUND ===== */
+body{margin:0;min-height:100vh;color:var(--ink);font:600 17px/1.55 Nunito,system-ui,sans-serif;
+  background:radial-gradient(circle at 8% 0,#ffe6ef 0,transparent 35%),radial-gradient(circle at 96% 8%,#dcefff 0,transparent 35%),
+  radial-gradient(circle at 50% 100%,#fff2cf 0,transparent 40%),var(--bg)}
+h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;margin:0;line-height:1.15}
+main{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:18px 14px 80px}
+
+/* floating stars (created by JS) */
+.stars span{position:fixed;bottom:-50px;z-index:0;pointer-events:none;opacity:.55;animation:rise linear infinite}
+@keyframes rise{to{transform:translateY(-120vh) rotate(360deg)}}
+
+/* ===== 3. HEADER ===== */
+header{text-align:center;padding:14px 0 6px}
+.title{font-size:clamp(2.3rem,9vw,4.6rem);font-weight:700;letter-spacing:.02em;
+  background:linear-gradient(90deg,var(--c4),var(--c2),var(--c3),var(--c1),var(--c5),var(--c4));background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite;display:inline-block}
+@keyframes shine{to{background-position:300% 0}}
+.bounce{display:inline-block;font-size:clamp(2rem,8vw,3.6rem);animation:bounce 1.8s ease-in-out infinite}
+.bounce:last-child{animation-delay:.4s}
+@keyframes bounce{50%{transform:translateY(-12px) rotate(8deg)}}
+header p{margin:6px 0 0;color:var(--mute);font-weight:700}
+
+/* ===== 4. CARDS / STUDENT FORM ===== */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-top:18px}
+.card h2{font-size:1.4rem;margin-bottom:10px}
+.fields{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.fields label{display:grid;gap:4px;font-weight:800;color:var(--mute)}
+.t,select{font:inherit;color:var(--ink);background:#fff;border:2px solid var(--line);border-bottom:3px solid var(--c,var(--c1));
+  border-radius:12px;padding:5px 10px;min-width:9em;max-width:100%;transition:.15s}
+.t:focus,select:focus{outline:3px solid color-mix(in srgb,var(--c,var(--c1)) 35%,transparent);background:#fffdf4}
+.t.wide{width:100%;margin-top:4px}
+.t.ok,select.ok{border-color:var(--good);background:#e6f8f0}
+.t.bad,select.bad{border-color:var(--bad);background:#fdeaea}
+
+/* ===== 5. STICKY PROGRESS BAR ===== */
+.bar{position:sticky;top:8px;z-index:30;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 16px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-radius:999px;box-shadow:var(--shadow);margin-top:18px}
+.track{flex:1 1 160px;height:14px;background:#e3e8f6;border-radius:999px;overflow:hidden}
+#fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--c3),var(--c1),var(--c5));transition:width .4s}
+#msg{flex:2 1 220px;font-weight:800}
+.chip{display:inline-block;background:color-mix(in srgb,var(--c,var(--c1)) 14%,#fff);border-radius:10px;padding:0 10px;font-weight:800}
+
+/* ===== 6. MIND MAP + SUMMARY ===== */
+.core{display:block;width:max-content;max-width:100%;margin:6px auto 0;background:var(--ink);color:#fff;font:600 1.3rem Fredoka,sans-serif;padding:12px 26px;border-radius:999px;position:relative}
+.core::after{content:"";position:absolute;left:50%;top:100%;width:4px;height:18px;background:var(--ink);transform:translateX(-50%)}
+.branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px 14px;margin-top:20px}
+.br{display:block;text-decoration:none;color:var(--ink);border:3px solid var(--c);border-radius:20px;padding:10px 12px;position:relative;
+  background:color-mix(in srgb,var(--c) 10%,#fff);transition:transform .2s,box-shadow .2s}
+.br::before{content:"";position:absolute;left:50%;bottom:100%;width:4px;height:18px;background:var(--c);transform:translateX(-50%)}
+.br:hover{transform:translateY(-4px) rotate(-.6deg);box-shadow:var(--shadow)}
+.br b{font:600 1.1rem Fredoka,sans-serif;color:var(--c)}
+.leaves{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.leaves span{background:#fff;border:2px solid var(--c);border-radius:999px;padding:0 10px;font-size:.88rem;font-weight:800}
+.sums{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:16px}
+.sc{border:3px solid var(--c);border-radius:20px;background:color-mix(in srgb,var(--c) 8%,#fff);padding:6px 14px 12px;scroll-margin-top:90px}
+.sc summary{cursor:pointer;font:600 1.25rem Fredoka,sans-serif;color:var(--c);padding:6px 0}
+.srow b{display:block;margin-top:8px;color:var(--c)}
+.srow ul{margin:2px 0 0;padding-left:1.2em}
+
+/* ===== 7. WORKSHEET PARTS ===== */
+.part{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);margin-top:24px;overflow:hidden;
+  --t:color-mix(in srgb,var(--c) 11%,#fff);scroll-margin-top:90px;transition:transform .25s}
+.part:hover{transform:translateY(-2px)}
+.part>h2{background:var(--c);color:#fff;padding:14px 18px;font-size:1.45rem;display:flex;gap:10px;align-items:center}
+.pbody{padding:16px 18px 20px}
+.act{margin-top:20px}
+.act h3{color:var(--c);font-size:1.2rem}
+.inst{margin:2px 0 6px;color:var(--mute)}
+.bank{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.bank span{background:#fff;border:2px dashed var(--c);border-radius:10px;padding:0 10px;font-weight:800}
+.items{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.items.fix,.items.write,.items.dialog{grid-template-columns:1fr}
+.items.fix{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.q{background:var(--t);border-radius:14px;padding:8px 12px}
+.q.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.q i{font-style:normal;font-weight:800;color:var(--c)}
+.fix{display:block;color:var(--bad);font-weight:800;font-size:.9rem}
+small.fix:empty{display:none}
+.read{background:var(--t);border-left:6px solid var(--c);border-radius:14px;padding:10px 16px;margin:8px 0}
+.read h4{margin:0;font:600 1.1rem Fredoka;color:var(--c)}
+.read p{margin:6px 0}
+.area{min-height:200px;resize:vertical;background-image:repeating-linear-gradient(#fff 0 31px,var(--line) 31px 33px);line-height:33px}
+
+/* radio pills */
+.opts{display:inline-block;border-radius:12px}
+.opts.ok{background:#e6f8f0;outline:2px solid var(--good)}
+.opts.bad{background:#fdeaea;outline:2px solid var(--bad)}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0}
+.opt span{display:inline-block;margin:2px;padding:0 12px;border:2px solid var(--c);border-radius:999px;background:#fff;cursor:pointer;transition:.15s}
+.opt span:hover{background:var(--t);transform:translateY(-1px)}
+.opt input:checked+span{background:var(--c);color:#fff;transform:scale(1.06)}
+.opt input:focus-visible+span{outline:3px solid var(--ink)}
+
+/* dialogue bubbles */
+.dlg{display:grid;gap:8px}
+.bub{max-width:min(94%,560px);padding:8px 14px;border-radius:18px;background:var(--t);border:2px solid var(--c)}
+.bub.l{border-bottom-left-radius:4px}
+.bub.r{border-bottom-right-radius:4px;justify-self:end;background:#fff}
+
+/* ===== 8. ACTIONS / RESULT ===== */
+.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px}
+.btn{font:700 1.05rem Fredoka,sans-serif;border:0;border-radius:999px;padding:12px 24px;color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,var(--c1),var(--c5));box-shadow:0 6px 16px rgba(60,80,200,.3);transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 10px 22px rgba(60,80,200,.35)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.go{background:linear-gradient(135deg,var(--c3),var(--c6))}
+.btn.save{background:linear-gradient(135deg,var(--c2),var(--c4))}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+#result{text-align:center;animation:pop .5s}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.ring{width:150px;height:150px;border-radius:50%;margin:8px auto;display:grid;place-items:center;
+  background:conic-gradient(var(--good) calc(var(--p)*1%),#e3e8f6 0)}
+.ring b{width:112px;height:112px;border-radius:50%;background:#fff;display:grid;place-items:center;font:700 1.9rem Fredoka}
+#rmsg{font:600 1.5rem Fredoka}
+
+/* ===== 9. TOASTS ===== */
+#toasts{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99;display:grid;gap:8px;width:min(92vw,440px)}
+.toast{padding:12px 18px;border-radius:16px;color:#fff;font-weight:800;box-shadow:var(--shadow);animation:slide .3s;background:var(--c1)}
+.toast.ok{background:var(--good)}.toast.err{background:var(--bad)}.toast.warn{background:var(--c2)}
+@keyframes slide{from{transform:translateY(20px);opacity:0}}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* print: one part per page, no buttons */
+@media print{.stars,.bar,.actions,#toasts{display:none}body{background:#fff}.part{break-after:page;box-shadow:none}.part:hover{transform:none}}
+</style>
+</head>
+<body>
+<div class="stars" id="stars" aria-hidden="true"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<main>
+  <!-- ===== HEADER ===== -->
+  <header>
+    <span class="bounce">📘</span> <h1 class="title">ENGLISH REVIEW</h1> <span class="bounce">🌟</span>
+    <p>Present Simple • Plural Nouns • School Vocabulary • Communication</p>
+  </header>
+
+  <!-- ===== STUDENT INFO ===== -->
+  <section class="card" id="student">
+    <h2>🧑‍🎓 Student information</h2>
+    <div class="fields">
+      <label>Full Name<input class="t" id="name" autocomplete="name" placeholder="Write your full name"></label>
+      <label>Class / Grade<input class="t" id="klass" placeholder="e.g. 7A"></label>
+      <label>Date<input class="t" id="date" type="date"></label>
+      <label>School (optional)<input class="t" id="school" placeholder="School name"></label>
+    </div>
+  </section>
+
+  <!-- ===== PROGRESS BAR ===== -->
+  <div class="bar">
+    <div class="track"><div id="fill"></div></div>
+    <b id="cnt">0 / 0</b>
+    <span id="msg">Let’s start! You can do it! 🚀</span>
+  </div>
+
+  <!-- ===== LESSON SUMMARY (mind map + cards) ===== -->
+  <section class="card">
+    <h2>🧠 Lesson summary – tap a branch</h2>
+    <div id="mm"></div>
+    <div class="sums" id="summary"></div>
+  </section>
+
+  <!-- ===== WORKSHEET (rendered by JavaScript) ===== -->
+  <div id="parts"></div>
+
+  <!-- ===== FINISH / SAVE ===== -->
+  <div class="actions">
+    <button class="btn go" id="finish"> اعرف نتيجتك  </button>
+    <button class="btn save" id="save"> Submit / أرسل </button>
+    <button class="btn ghost" id="print"></button>
+    <button class="btn ghost" id="reset"></button>
+  </div>
+  <section class="card" id="result" hidden>
+    <div class="ring" id="ring"><b id="rscore"></b></div>
+    <div id="rmsg"></div>
+    <p id="rsub" style="color:var(--mute)"></p>
+  </section>
+</main>
+
+<script>
+/* =====================================================================
+   CONFIGURATION
+   1) Deploy the Apps Script at the bottom of this file as a Web App.
+   2) Paste the Web App URL below.
+   ===================================================================== */
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhwVYX9q1qGGXtfkM6rBiJ3aZ9dPWjFn3O-JtuLOhEDU03ze2WwtISweC9Bsfivq6_Qw/exec';
+const STORE_KEY  = 'eng-review-worksheet-v1';
+
+/* =====================================================================
+   DATA – lesson summary (rendered as mind map + collapsible cards)
+   ===================================================================== */
+const SUMMARY = [
+ {id:'s-present',e:'⏰',t:'Present Simple',c:'--c1',leaves:['+ I play','+ she plays','− don’t / doesn’t','? Do / Does'],rows:[
+  ['💡 We use it for',['habits, routines and facts']],
+  ['➕ Affirmative',['I / You / We / They + verb → I play football.','He / She / It + verb + s → She plays football.','Remember: add -s to most verbs with he, she and it.']],
+  ['➖ Negative',['I / You / We / They + don’t + verb → I don’t play tennis.','He / She / It + doesn’t + verb → He doesn’t play tennis.']],
+  ['❓ Interrogative',['Do + I/you/we/they + verb? → Do you like English?','Does + he/she/it + verb? → Does she like English?']],
+  ['💬 Short answers',['Yes, I do. / No, I don’t.','Yes, she does. / No, she doesn’t.']],
+  ['⚠️ Remember',['After does / doesn’t, use the verb without -s.']]]},
+ {id:'s-plural',e:'📦',t:'Plural Nouns',c:'--c2',leaves:['+s','+es','y → ies','f/fe → ves','irregular'],rows:[
+  ['💡 We usually add -s to form the plural.',[]],
+  ['Rules',['Add -s: book → books','Add -es: box → boxes','Consonant + y → -ies: baby → babies','-f / -fe → -ves (some nouns): knife → knives','Irregular: child → children','Irregular: man → men']]]},
+ {id:'s-vocab',e:'🏫',t:'School Vocabulary',c:'--c3',leaves:['Equipment','Places','People'],rows:[
+  ['🔧 Equipment',['Speakers','Computer','Keyboard','Microscope','Board']],
+  ['📍 Places',['Library','Gym','Classroom','Computer room']],
+  ['👥 People',['Security guard','Classmates']]]},
+ {id:'s-intro',e:'👋',t:'Introducing Yourself',c:'--c4',leaves:['Name','Age','Class','Nice to meet you'],rows:[
+  ['Asking → Responding',['What’s your name? → My name is Ahmed.','How old are you? → I’m thirteen years old.','What class are you in? → I’m in class 7A.','Nice to meet you. → Nice to meet you, too.']]]},
+ {id:'s-prefer',e:'💜',t:'Interest & Preferences',c:'--c5',leaves:['That’s a good idea','Which … do you prefer?','I prefer / enjoy / like'],rows:[
+  ['😃 Expressing interest',['That’s a good idea.','That seems interesting.','That sounds OK.']],
+  ['❓ Asking about preference',['Which … do you prefer?']],
+  ['⭐ Expressing preference',['I prefer …','I enjoy …','I like …']],
+  ['💬 Examples',['A: Which sport do you prefer? B: I prefer basketball.','A: I enjoy reading books. B: That seems interesting!']]]}
+];
+
+/* =====================================================================
+   DATA – exercises. Types: classify | fill | fix | choice | match | dialog | write
+   - fill:   text with {} blanks, answer = list of accepted answers (omit for free writing)
+   - fix:    prompt + accepted answers (array) or {any:[[keywords]...],show:'model answer'}
+   - choice: text with {} + options + correct option
+   ===================================================================== */
+const PARTS = [
+ {id:'P1',e:'🏫',c:'--c3',title:'Part 1. Vocabulary: School life',acts:[
+  {id:'A1',type:'classify',title:'Activity 1. Classify the words',inst:'Put the following words in the correct category.',
+   cats:['School equipment','Places','People'],
+   items:[['speakers',0],['library',1],['keyboard',0],['classmates',2],['gym',1],['microscope',0],['security guard',2],['classroom',1],['computer',0],['board',0],['computer room',1]]},
+  {id:'A2',type:'fill',title:'Activity 2. Complete the sentences',inst:'Complete the sentences with words from the box.',
+   bank:['keyboard','library','microscope','security guard','speakers','gym'],
+   items:[['We use a {} to type on a computer.',['keyboard']],['Students read books in the {}.',['library']],['A {} helps us see very small objects.',['microscope']],
+          ['The {} protects the school.',['security guard']],['We listen to music through {}.',['speakers']],['Students play sports in the {}.',['gym']]]}]},
+ {id:'P2',e:'📦',c:'--c2',title:'Part 2. Grammar: Plural nouns',acts:[
+  {id:'A3',type:'fill',title:'Activity 3. Write the plural form',inst:'Singular ➜ Plural',
+   items:[['Computer ➜ {}',['computers']],['Library ➜ {}',['libraries']],['Classmate ➜ {}',['classmates']],['Keyboard ➜ {}',['keyboards']],['Box ➜ {}',['boxes']],
+          ['Baby ➜ {}',['babies']],['Watch ➜ {}',['watches']],['Child ➜ {}',['children']],['Knife ➜ {}',['knives']],['Tomato ➜ {}',['tomatoes']]]},
+  {id:'A4',type:'choice',title:'Activity 4. Choose the correct answer',
+   items:[['There are three {} in the room.',['computer','computers'],'computers'],['The school has two {}.',['library','libraries'],'libraries'],
+          ['I have four {}.',['book','books'],'books'],['There are five {} in the classroom.',['child','children'],'children'],
+          ['We need two {}.',['box','boxes'],'boxes'],['My school has many {}.',['classmate','classmates'],'classmates']]},
+  {id:'A5',type:'fix',title:'Activity 5. Correct the mistakes',inst:'Rewrite the sentences correctly.',
+   items:[['There are five computer in the room.',['There are five computers in the room.']],['I have two watchs.',['I have two watches.']],
+          ['There are three library in my town.',['There are three libraries in my town.']],['The school has many childs.',['The school has many children.']],
+          ['We need four box.',['We need four boxes.']]]}]},
+ {id:'P3',e:'⏰',c:'--c1',title:'Part 3. Grammar: Present Simple',acts:[
+  {id:'A6',type:'choice',title:'Activity 6. Choose the correct answer',
+   items:[['My brother {} to school every day.',['go','goes'],'goes'],['I {} football after school.',['play','plays'],'play'],['She {} English.',['study','studies'],'studies'],
+          ['They {} like mathematics.',['don’t','doesn’t'],'don’t'],['My teacher {} English.',['teach','teaches'],'teaches'],['He {} use a computer.',['don’t','doesn’t'],'doesn’t'],
+          ['We {} English on Monday.',['have','has'],'have'],['Ahmed {} TV every evening.',['watch','watches'],'watches']]},
+  {id:'A7',type:'fill',title:'Activity 7. Put the verbs in brackets in the correct form',
+   items:[['Sara {} (study) English every day.',['studies']],['My friends {} (play) basketball after school.',['play']],['My father {} (work) in a hospital.',['works']],
+          ['We {} (not / go) to school on Sunday.',['don’t go']],['He {} (not / like) science.',['doesn’t like']],['I {} (read) books in the library.',['read']],
+          ['My sister {} (watch) television in the evening.',['watches']],['They {} (not / use) computers every day.',['don’t use']]]},
+  {id:'A8',type:'fix',title:'Activity 8. Change the sentences as indicated',
+   items:[['She plays tennis.',['She doesn’t play tennis.'],'(Negative)'],['They study English.',['They don’t study English.'],'(Negative)'],
+          ['He doesn’t like football.',['He likes football.'],'(Affirmative)'],['You go to school by bus.',['Do you go to school by bus?'],'(Interrogative)'],
+          ['Sara watches TV every evening.',['Does Sara watch TV every evening?'],'(Interrogative)'],['We don’t play basketball.',['We play basketball.'],'(Affirmative)']]}]},
+ {id:'P4',e:'💬',c:'--c4',title:'Part 4. Communication',acts:[
+  {id:'A9',type:'match',title:'Activity 9. Match the expressions with their functions',inst:'Choose A, B or C.',
+   bank:['A. Asking about preference','B. Expressing interest','C. Expressing preference'],
+   items:[['That’s a good idea.','B'],['Which sport do you prefer?','A'],['I prefer basketball.','C'],['That seems interesting.','B'],['I enjoy reading.','C'],['That sounds OK.','B']]},
+  {id:'A10',type:'dialog',title:'Activity 10. Complete the dialogue',inst:'Complete the dialogue using the expressions in the box.',
+   bank:['Which school subject do you prefer?','I prefer English.','That sounds interesting.','I enjoy reading books.','That’s a good idea.'],
+   lines:[['Ahmed','Hello! My name is Ahmed. What’s your name?'],['Youssef','My name is Youssef. Nice to meet you.'],
+          ['Ahmed','Nice to meet you, too. {}','Which school subject do you prefer?'],['Youssef','{}','I prefer English.'],
+          ['Ahmed','Really? {}','That sounds interesting.'],['Youssef','What about you? What do you enjoy doing?'],
+          ['Ahmed','{}','I enjoy reading books.'],['Youssef','We can visit the school library together!'],['Ahmed','{}','That’s a good idea.']]},
+  {id:'A11',type:'fill',title:'Activity 11. Complete the sentences with your own ideas',
+   items:[['My name is {}.'],['I am {} years old.'],['I am in class {}.'],['I like {}.'],['I enjoy {}.'],['I prefer {} to {}.']]}]},
+ {id:'P5',e:'📖',c:'--c5',title:'Part 5. Integrated practice',acts:[
+  {id:'A12A',type:'fix',title:'Activity 12. Read and answer – A. Answer the questions.',
+   read:{t:'A new student at school',p:['Hello! My name is Adam. I am thirteen years old. I am a student at Al Amal School. I study English, French and mathematics. My favourite subject is English because I enjoy learning new words.',
+     'My school has a library, a gym and a computer room. There are many computers and keyboards in the computer room. My classmates like using computers, but I prefer reading books in the library. My friend Hamza plays basketball after school. He doesn’t like reading, but he enjoys sports.']},
+   items:[['How old is Adam?',{any:[['thirteen'],['13']],show:'He is thirteen years old.'}],['What is his favourite subject?',{any:[['english']],show:'English'}],
+          ['What places are there in his school?',{any:[['library','gym','computer room']],show:'A library, a gym and a computer room.'}],
+          ['What does Adam prefer?',{any:[['reading']],show:'He prefers reading books in the library.'}],['Does Hamza enjoy sports?',{any:[['yes']],show:'Yes, he does.'}]]},
+  {id:'A12B',type:'fill',title:'B. Find in the text:',
+   items:[['Two plural nouns: {} / {}',['computers','keyboards','classmates','words','sports','books']],
+          ['Two verbs in the third-person singular: {} / {}',['plays','enjoys','has','is','likes']],
+          ['One negative sentence: {}',['He doesn’t like reading, but he enjoys sports.','He doesn’t like reading']]]},
+  {id:'A12C',type:'choice',title:'C. True or false?',
+   items:[['Adam is fourteen years old. {}',['True','False'],'False'],['Adam enjoys learning new words. {}',['True','False'],'True'],
+          ['Hamza prefers reading books. {}',['True','False'],'False'],['The school has a computer room. {}',['True','False'],'True']]}]},
+ {id:'P6',e:'✍️',c:'--c6',title:'Part 6. Production',acts:[
+  {id:'A13',type:'write',title:'Activity 13. Introduce yourself',inst:'Write a short paragraph introducing yourself. Use the following information:',
+   bank:['Name and age.','School and class.','Favourite school subjects.','Daily school activities.','Likes and preferences.']}]}
+];
+
+/* =====================================================================
+   MESSAGES
+   ===================================================================== */
+const LIVE = [[0,'Let’s start! You can do it! 🚀'],[1,'Great start! Keep going! 💪'],[25,'You’re doing amazing! ⭐'],[50,'Over halfway there! 🔥'],[75,'Almost done! 🏁'],[100,'All answered! Press “Finish & check” 🎉']];
+const END = [[90,'Outstanding! You’re a superstar! 🏆🌟'],[70,'Great job! Well done! 🎉'],[50,'Good effort! Keep practising! 💪'],[0,'Don’t give up! Read the summary and try again 📚']];
+const pick = (list,n)=>[...list].reverse().find(([min])=>n>=min)[1];
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const REG = [];                      // registry of every answerable field
+const norm = s=>String(s).toLowerCase().replace(/[’‘`]/g,"'").replace(/\bdo not\b/g,"don't").replace(/\bdoes not\b/g,"doesn't")
+                 .replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();
+function okText(val,ans){            // compare typed text with accepted answers
+  const v=norm(val); if(!v) return false;
+  if(Array.isArray(ans)) return ans.some(a=>norm(a)===v);
+  return ans.any.some(set=>set.every(k=>v.includes(norm(k))));
+}
+function toast(msg,type=''){
+  const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg;
+  $('#toasts').appendChild(t); setTimeout(()=>t.remove(),3500);
+}
+function party(big){                 // confetti (optional library)
+  if(typeof confetti!=='function') return;
+  confetti({particleCount:big?200:80,spread:80,origin:{y:.6},disableForReducedMotion:true});
+  if(big) setTimeout(()=>{confetti({particleCount:90,angle:60,spread:70,origin:{x:0}});confetti({particleCount:90,angle:120,spread:70,origin:{x:1}});},250);
+}
+function get(id){                    // read the value of a field
+  const e=$(`[data-id="${id}"]`); if(!e) return '';
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) return e.value.trim();
+  const c=$('input:checked',e); return c?c.value:'';
+}
+function put(id,v){
+  const e=$(`[data-id="${id}"]`); if(!e||v==null) return;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) e.value=v;
+  else $$('input',e).forEach(i=>i.checked=(i.value===v));
+}
+
+/* =====================================================================
+   RENDERING EXERCISES
+   ===================================================================== */
+// register a field and return its id
+function mk(a,i,txt,kind,ans,show,j){
+  const id=a.id+'_'+i+(j==null?'':'_'+j);
+  REG.push({id,kind,ans,show,key:`${a.id}.${i+1}${j==null?'':'.'+(j+1)} ${txt.replace(/\{\}/g,'__').slice(0,30)}`});
+  return id;
+}
+const fx  = id=>`<small class="fix" data-fix="${id}"></small>`;
+const sel = (id,o)=>`<select data-id="${id}"><option value="">— choose —</option>${o.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select>`;
+const inp = id=>`<input class="t" data-id="${id}" autocomplete="off" spellcheck="false">${fx(id)}`;
+
+const RENDER = {
+  classify:a=>a.items.map(([w,c],i)=>{const id=mk(a,i,w,'exact',String(c),a.cats[c]);
+    return `<div class="q row"><b class="chip">${w}</b>${sel(id,a.cats.map((t,k)=>[k,t]))}${fx(id)}</div>`}).join(''),
+  fill:a=>a.items.map(([t,ans],i)=>{const n=(t.match(/\{\}/g)||[]).length;let j=0;
+    return `<div class="q">${t.replace(/\{\}/g,()=>inp(mk(a,i,t,ans?'text':'free',ans,ans?ans[0]:'',n>1?j++:null)))}</div>`}).join(''),
+  fix:a=>a.items.map(([p,ans,tag],i)=>{const id=mk(a,i,p,'text',ans,Array.isArray(ans)?ans[0]:ans.show);
+    return `<div class="q"><div>${p} ${tag?`<i>${tag}</i>`:''}</div><input class="t wide" data-id="${id}" autocomplete="off" spellcheck="false">${fx(id)}</div>`}).join(''),
+  choice:a=>a.items.map(([t,opts,ok],i)=>{const id=mk(a,i,t,'exact',ok,ok);
+    const g=`<span class="opts" data-id="${id}">${opts.map(o=>`<label class="opt"><input type="radio" name="${id}" value="${o}"><span>${o}</span></label>`).join('')}</span>${fx(id)}`;
+    return `<div class="q">${t.replace('{}',()=>g)}</div>`}).join(''),
+  match:a=>a.items.map(([x,l],i)=>{const id=mk(a,i,x,'exact',l,l);
+    return `<div class="q row"><span>${i+1}. ${x}</span>${sel(id,['A','B','C'].map(v=>[v,v]))}${fx(id)}</div>`}).join(''),
+  dialog:a=>`<div class="dlg">${a.lines.map(([who,t,ans],i)=>{
+    const h=ans?t.replace('{}',()=>{const id=mk(a,i,t,'exact',ans,ans);return sel(id,a.bank.map(b=>[b,b]))+fx(id)}):t;
+    return `<div class="bub ${who==='Ahmed'?'l':'r'}"><b>${who}:</b> ${h}</div>`}).join('')}</div>`,
+  write:a=>{const id=mk(a,0,'Paragraph','free');
+    return `<textarea class="t wide area" data-id="${id}" placeholder="Hello! My name is …"></textarea>`}
+};
+
+function renderParts(){
+  $('#parts').innerHTML=PARTS.map((p,n)=>{
+    return `<section class="part" id="${p.id}" style="--c:var(${p.c})"><h2><span>${p.e}</span>${p.title}</h2><div class="pbody">
+      ${p.acts.map(a=>`<div class="act"><h3>${a.title}</h3>${a.inst?`<p class="inst">${a.inst}</p>`:''}
+        ${a.read?`<div class="read"><h4>${a.read.t}</h4>${a.read.p.map(x=>`<p>${x}</p>`).join('')}</div>`:''}
+        ${a.bank?`<div class="bank">${a.bank.map(b=>`<span>${b}</span>`).join('')}</div>`:''}
+        <div class="items ${a.type}">${RENDER[a.type](a)}</div></div>`).join('')}
+    </div></section>`}).join('');
+}
+function renderSummary(){
+  $('#mm').innerHTML=`<div class="core">📘 English Review</div><div class="branches">${SUMMARY.map(s=>
+    `<a class="br" href="#${s.id}" style="--c:var(${s.c})"><b>${s.e} ${s.t}</b><div class="leaves">${s.leaves.map(l=>`<span>${l}</span>`).join('')}</div></a>`).join('')}</div>`;
+  $('#summary').innerHTML=SUMMARY.map(s=>`<details class="sc" id="${s.id}" open style="--c:var(${s.c})"><summary>${s.e} ${s.t}</summary>
+    ${s.rows.map(([l,ls])=>`<div class="srow"><b>${l}</b>${ls.length?`<ul>${ls.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}</div>`).join('')}</details>`).join('');
+  $$('.br').forEach(a=>a.addEventListener('click',()=>{const d=$(a.getAttribute('href'));if(d)d.open=true}));
+}
+
+/* =====================================================================
+   PROGRESS, CHECKING, SAVING
+   ===================================================================== */
+function update(){
+  const rs=REG.filter(r=>!r.pic), done=rs.filter(r=>get(r.id)).length, pct=Math.round(done/rs.length*100);
+  $('#fill').style.width=pct+'%'; $('#cnt').textContent=`${done} / ${rs.length}`; $('#msg').textContent=pick(LIVE,pct);
+}
+function check(show){                // returns score; marks answers when show=true
+  let score=0,total=0;
+  REG.forEach(r=>{
+    if(r.kind==='free') return;
+    total++; const v=get(r.id), ok=r.kind==='exact'?v===r.ans:okText(v,r.ans); if(ok) score++;
+    if(show){const e=$(`[data-id="${r.id}"]`);e.classList.remove('ok','bad');e.classList.add(ok?'ok':'bad');
+             $(`[data-fix="${r.id}"]`).textContent=ok?'':'✔ '+r.show;}
+  });
+  return {score,total};
+}
+function finish(){
+  const {score,total}=check(true), pct=Math.round(score/total*100);
+  $('#result').hidden=false; $('#ring').style.setProperty('--p',pct); $('#rscore').textContent=pct+'%';
+  $('#rmsg').textContent=pick(END,pct); $('#rsub').textContent=`You got ${score} out of ${total} correct. Red answers show the right answer.`;
+  party(pct>=70); toast(`🎉 Finished! Score: ${score} / ${total}`,'ok');
+  $('#result').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function save(){
+  const name=$('#name').value.trim();
+  if(!name){toast('✏️ Please write your full name first.','warn');$('#name').focus();$('#student').scrollIntoView({behavior:'smooth'});return;}
+  const {score,total}=check(false), answers={};
+  REG.forEach(r=>answers[r.key]=get(r.id));
+  const payload={timestamp:new Date().toISOString(),name,klass:$('#klass').value.trim(),date:$('#date').value,school:$('#school').value.trim(),
+                 score,total,percent:Math.round(score/total*100),answers};
+  if(SCRIPT_URL.includes('PASTE_YOUR')){
+    toast('⚠️ Teacher: paste your Apps Script URL in the code. Answers copied instead.','warn');
+    try{await navigator.clipboard.writeText(JSON.stringify(payload,null,2))}catch(e){}
+    return;
+  }
+  const b=$('#save'); b.disabled=true; b.textContent='⏳ Saving…';
+  try{
+    // text/plain + no-cors avoids the browser preflight that Apps Script cannot answer
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    toast('✅ Answers sent to Google Sheets!','ok'); party(false);
+  }catch(e){toast('❌ Could not save. Check the internet and the Apps Script URL.','err')}
+  finally{b.disabled=false;b.textContent='☁️ Save to Google Sheets'}
+}
+
+/* ----- autosave in the browser so nothing is lost on refresh ----- */
+let timer;
+function persist(){
+  clearTimeout(timer);
+  timer=setTimeout(()=>{try{localStorage.setItem(STORE_KEY,JSON.stringify({
+    s:{name:$('#name').value,klass:$('#klass').value,date:$('#date').value,school:$('#school').value},
+    v:Object.fromEntries(REG.map(r=>[r.id,get(r.id)]))}))}catch(e){}},300);
+}
+function restore(){
+  try{const d=JSON.parse(localStorage.getItem(STORE_KEY)||'null'); if(!d) return;
+    Object.entries(d.s).forEach(([k,v])=>$('#'+k).value=v); REG.forEach(r=>put(r.id,d.v[r.id]));}catch(e){}
+}
+function reset(){
+  if(!confirm('Erase all answers and start over?')) return;
+  $$('input,select,textarea').forEach(e=>{if(e.type==='radio')e.checked=false;else e.value=''});
+  $$('.ok,.bad').forEach(e=>e.classList.remove('ok','bad')); $$('.fix').forEach(e=>e.textContent='');
+  $('#date').value=new Date().toISOString().slice(0,10); $('#result').hidden=true;
+  try{localStorage.removeItem(STORE_KEY)}catch(e){}
+  update(); toast('🔄 Fresh start!'); scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function stars(){                    // floating background stars
+  $('#stars').innerHTML=Array.from({length:22},()=>
+    `<span style="left:${Math.random()*100}%;font-size:${14+Math.random()*26}px;animation-duration:${14+Math.random()*18}s;animation-delay:-${Math.random()*30}s">${['⭐','✨','🌟','💫'][Math.floor(Math.random()*4)]}</span>`).join('');
+}
+function onEdit(e){                  // clear marks when a student changes an answer
+  const t=e.target.closest&&e.target.closest('[data-id]');
+  if(t){t.classList.remove('ok','bad');const f=$(`[data-fix="${t.dataset.id}"]`);if(f)f.textContent='';}
+  persist(); update();
+}
+renderSummary(); renderParts(); stars();
+$('#date').value=new Date().toISOString().slice(0,10);
+restore(); update();
+document.addEventListener('input',onEdit); document.addEventListener('change',onEdit);
+$('#finish').onclick=finish; $('#save').onclick=save; $('#reset').onclick=reset; $('#print').onclick=()=>print();
+
+/* =====================================================================
+   GOOGLE SHEETS – APPS SCRIPT (copy into script.google.com)
+   ---------------------------------------------------------------------
+   SETUP
+   1. Create a Google Sheet, then Extensions > Apps Script.
+   2. Delete the default code and paste the code below. Save.
+   3. Deploy > New deployment > type: Web app.
+        Execute as: Me      Who has access: Anyone
+   4. Authorise, copy the Web app URL and paste it in SCRIPT_URL above.
+   5. After EVERY code change, use Deploy > Manage deployments > Edit > New version.
+   Each student creates one new row in the sheet called "Answers".
+
+   function doPost(e) {
+     var lock = LockService.getScriptLock();
+     lock.waitLock(20000);                       // avoids clashes when many students save together
+     try {
+       var d = JSON.parse(e.postData.contents);
+       var ss = SpreadsheetApp.getActiveSpreadsheet();
+       var sh = ss.getSheetByName('Answers') || ss.insertSheet('Answers');
+       var fixed = ['Timestamp','Full Name','Class / Grade','Date','School','Score','Total','Percent'];
+       var header = sh.getLastColumn() ? sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0] : fixed.slice();
+       var answers = d.answers || {};
+       Object.keys(answers).forEach(function (k) {   // add a column for every new question
+         if (header.indexOf(k) < 0) header.push(k);
+       });
+       sh.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight('bold');
+       var base = { 'Timestamp': new Date(), 'Full Name': d.name, 'Class / Grade': d.klass, 'Date': d.date,
+                    'School': d.school, 'Score': d.score, 'Total': d.total, 'Percent': d.percent };
+       var row = header.map(function (h) { return h in base ? base[h] : (answers[h] || ''); });
+       sh.appendRow(row);
+       return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+     } catch (err) {
+       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) })).setMimeType(ContentService.MimeType.JSON);
+     } finally {
+       lock.releaseLock();
+     }
+   }
+
+   // Optional: open the Web app URL in a browser to test that it is live
+   function doGet() { return ContentService.createTextOutput('Worksheet receiver is running ✅'); }
+   ===================================================================== */
+</script>
+</body>
+</html>
